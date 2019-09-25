@@ -215,10 +215,12 @@ drawBOSIcon:
 	pop hl
 	ret
 drawCredits:
-	ld l,$01
+	ld a,(config_colors+1)
+	ld l,a
 	push hl
 	call gfx_SetTextBGColor
-	ld l,$FF
+	ld a,(config_colors)
+	ld l,a
 	ex (sp),hl
 	call gfx_SetTextFGColor
 	pop hl
