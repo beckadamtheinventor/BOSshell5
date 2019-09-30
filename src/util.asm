@@ -27,17 +27,22 @@ util_setup_packet:
 	ex hl,de
 	pop bc
 	pop af
+	push bc
+	ld l,a
+	push hl
+	call ti_PutC
+	pop hl
+	pop bc
 	pop hl
 	push bc
-	ld (de),a
-	inc de
-	ld bc,11
-	ldir
-	xor a,a
-	ld (de),a
-	ld l,1
+	ld de,11
+	push de
+	ld de,0
+	push de
 	push hl
-	call ti_SetArchiveStatus
+	call ti_Write
+	pop hl
+	pop hl
 	pop hl
 	call ti_Close
 	pop hl

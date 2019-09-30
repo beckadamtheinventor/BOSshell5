@@ -44,18 +44,18 @@ draw_objects:
 	ld a,(ix-1)
 	or a,a
 	ret z
+	ld b,a
 .loop:
 	push bc
-	call callIndIXplus5
+	call callIXplus7
 	lea ix,ix+8
 	pop bc
 	djnz .loop
 	ret
 
-callIndIXplus5:
-	ld bc,(ix+5)
-	push bc
-	ret
+callIXplus7:
+	lea hl,ix+7
+	jp (hl)
 
 
 
@@ -91,8 +91,8 @@ check_cursor_region:
 	jr nz,.check
 .background:
 	ld ix,backgroundObject
-	lea hl,ix+4
 .done:
+	lea hl,ix+4
 	ld (curHoverObject),ix
 	ret
 .check:
@@ -119,9 +119,7 @@ check_cursor_region:
 	jr c,.nope
 	ld c,(ix+3)
 	cp a,c
-	jr nc,.nope
-	lea hl,ix+4
-	jr .done
+	jr c,.done
 .nope:
 	lea ix,ix+8
 	djnz .loop

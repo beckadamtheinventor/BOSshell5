@@ -28,6 +28,24 @@ main_init:
 	call ti.RunIndicOff
 	call gfx_Begin
 	call ti_CloseAll
+	call config_load
+	jr nz,.loaded
+	ld hl,data_default_colors
+	ld de,config_colors
+	ldi
+	ldi
+	ldi
+	ldi
+	xor a,a
+	sbc hl,hl
+	ex hl,de
+	ld hl,cursor
+	ld (hl),a
+	inc hl
+	ld (hl),de
+.loaded:
+	ld hl,data_cursor_sprite
+	ld (cursor+4),hl
 	call gfx_SetDrawBuffer
 	ld l,0
 	push hl
@@ -42,44 +60,22 @@ main_init:
 	ex (sp),hl
 	call gfx_SetTextFGColor
 	pop hl
-	xor a,a
-	sbc hl,hl
-	ex hl,de
-	ld hl,cursor
+	ld hl,currentScreenObjects
+	ld a,1
 	ld (hl),a
 	inc hl
-	ld (hl),de
-	ld hl,currentScreenObjects
+	xor a,a
 	ld (hl),a
 	push hl
 	push hl
 	pop de
 	inc de
-	ld bc,maxCurrentScreenObjects-1
+	ld bc,maxScreenObjects-2
 	ldir
 	pop de
-	ld hl,defaultScreenObjects
-	ld bc,numDefaultScreenObjects
+	ld hl,BOSIconObject
+	ld bc,16
 	ldir
-	ld hl,cursor
-	ld de,2
-	ld (hl),de
-	inc hl
-	inc hl
-	inc hl
-	ld a,2
-	ld (hl),a
-	inc hl
-	ld de,data_cursor_sprite
-	ld (hl),de
-	call config_load
-	jr nc,main_loop
-	ld hl,data_default_colors
-	ld de,config_colors
-	ldi
-	ldi
-	ldi
-	ldi
 main_loop:
 	ld a,(config_colors)
 	ld l,a
@@ -87,18 +83,23 @@ main_loop:
 	call gfx_FillScreen
 	pop hl
 
-	ld a,(currentScreenObjects)
-	ld ix,currentScreenObjects+1
-	ld b,a
-	or a,a
-	call nz,draw_objects
-
+	call draw_objects
 	call get_cursor_sprite
-
 	call draw_cursor
+
 	call gfx_SwapDraw
-; Scan the keypad
-.keywait:
+
+	call mainKeyRoutine
+	cp a,$FF
+	jr nz,main_loop
+.exit:
+	call config_save
+	call ti_CloseAll
+	jp exit_full
+
+
+; Do stuff on the keypad
+mainKeyRoutine:
 	call kb_Scan
 	ld hl,kb_Data+2
 ; Group 1
@@ -142,6 +143,14 @@ main_loop:
 	jr nz,.exit
 ; Group 7
 	ld a,(hl)
+	call arrowKeys
+	jr z,mainKeyRoutine
+	ret
+.exit:
+	xor a,a
+	dec a
+	ret
+arrowKeys:
 	bit 0,a
 	call nz,cursorDown ;down arrow
 	bit 1,a
@@ -151,10 +160,7 @@ main_loop:
 	bit 3,a
 	call nz,cursorUp   ;up arrow
 	and a,$F
-	jp nz,main_loop
-	jr .keywait
-.exit:
-	call config_save
-	call ti_CloseAll
-	jp exit_full
+	ret
+
+
 
