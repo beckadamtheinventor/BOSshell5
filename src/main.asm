@@ -1,166 +1,120 @@
+; main cesium process routines
 
-kb_Data:=$F50010
-
-init:
-	call libload_load
-	jr z,main_init
-	call ti.HomeUp
-	call ti.RunIndicOff
-	ld hl,.needlibload
-	call ti.PutS
-	xor a,a
-	ld (ti.curCol),a
-	inc a
-	ld (ti.curRow),a
-	call ti.PutS
-	call GetCSC
-	jp ti.JForceCmdNoChar
-.needlibload:
-	db "Need libLoad",0
-	db "tiny.cc/clibs",0
-GetCSC:
-	call ti.GetCSC
-	or a,a
-	jr z,GetCSC
-	ret
-main_init:
-	call ti.HomeUp
-	call ti.RunIndicOff
-	call gfx_Begin
-	call ti_CloseAll
-	call config_load
-	jr nz,.loaded
-	ld hl,data_default_colors
-	ld de,config_colors
-	ldi
-	ldi
-	ldi
-	ldi
-	xor a,a
-	sbc hl,hl
-	ex hl,de
-	ld hl,cursor
-	ld (hl),a
-	inc hl
-	ld (hl),de
-.loaded:
-	ld hl,data_cursor_sprite
-	ld (cursor+4),hl
-	call gfx_SetDrawBuffer
-	ld l,0
-	push hl
-	call gfx_SetTransparentColor
-	call gfx_SetTextTransparentColor
-	ld a,(config_colors)
-	ld l,a
-	ex (sp),hl
-	call gfx_SetTextBGColor
-	ld a,(config_colors+1)
-	ld l,a
-	ex (sp),hl
-	call gfx_SetTextFGColor
-	pop hl
-	ld hl,currentScreenObjects
-	ld a,1
-	ld (hl),a
-	inc hl
-	xor a,a
-	ld (hl),a
-	push hl
-	push hl
-	pop de
-	inc de
-	ld bc,maxScreenObjects-2
-	ldir
-	pop de
-	ld hl,BOSIconObject
-	ld bc,16
-	ldir
+main_cesium:
+	call	lcd_init
+	call	main_init
+main_settings:
+	call	settings_load
+main_find:
+	call	find_files
+main_start:
+	call	gui_main
+	call	util_setup_apd
 main_loop:
-	ld a,(config_colors)
-	ld l,a
-	push hl
-	call gfx_FillScreen
-	pop hl
+	call	util_get_key
+	cp	a,ti.skClear
+	jp	z,.check_exit
+	cp	a,ti.skMode
+	jp	z,settings_show
+	cp	a,ti.skUp
+	jp	z,main_move_up_return
+	cp	a,ti.skDown
+	jp	z,main_move_down_return
+	cp	a,ti.skPrgm
+	jp	z,usb_fat_transfer
+	cp	a,ti.sk2nd
+	jp	z,execute_item
+	cp	a,ti.skEnter
+	jp	z,execute_item_alternate
+	cp	a,ti.skGraph
+	jp	z,feature_item_rename
+	cp	a,ti.skYequ
+	jp	z,feature_item_new
+	cp	a,ti.skAlpha
+	jp	z,feature_item_attributes
+	cp	a,ti.skZoom
+	jp	z,feature_item_edit
+	cp	a,ti.skDel
+	jp	z,feature_item_delete
+	cp	a,ti.skTrace
+	jp	z,feater_setup_editor
+	sub	a,ti.skAdd
+	jp	c,main_loop
+	cp	a,ti.skMath - ti.skAdd + 1
+	jp	nc,main_loop
+	call	search_alpha_item
+	jp	z,main_loop
+	jp	main_start
+.check_exit:
+	ld	a,(current_screen)
+	cp	a,screen_usb
+	jp	z,usb_detach
+	jp	exit_full
 
-	call draw_objects
-	call get_cursor_sprite
-	call draw_cursor
-
-	call gfx_SwapDraw
-
-	call mainKeyRoutine
-	cp a,$FF
-	jr nz,main_loop
-.exit:
-	call config_save
-	call ti_CloseAll
-	jp exit_full
-
-
-; Do stuff on the keypad
-mainKeyRoutine:
-	call kb_Scan
-	ld hl,kb_Data+2
-; Group 1
-	ld a,(hl)
-	inc hl
-	inc hl
-	bit 0,a
-	jp nz,right_click
-	bit 1,a
-	jp nz,left_click
-	bit 5,a
-	jp nz,left_click
-	bit 6,a
-	jp nz,settings_menu
-	bit 7,a
-	jp nz,delete_file
-; Group 2
-	ld a,(hl)
-	inc hl
-	inc hl
-	bit 7,a
-	jp nz,right_click
-; Group 3
-	ld a,(hl)
-	inc hl
-	inc hl
-; Group 4
-	ld a,(hl)
-	inc hl
-	inc hl
-; Group 5
-	ld a,(hl)
-	inc hl
-	inc hl
-; Group 6
-	ld a,(hl)
-	inc hl
-	inc hl
-; Is the clear key pressed?
-	bit 6,a
-	jr nz,.exit
-; Group 7
-	ld a,(hl)
-	call arrowKeys
-	jr z,mainKeyRoutine
+main_move_up_return:
+	ld	hl,main_start
+	push	hl
+main_move_up:
+	ld	hl,(current_selection_absolute)
+	compare_hl_zero
+	ret	z					; check if we are at the top
+	dec	hl
+	ld	(current_selection_absolute),hl
+	ld	a,(current_selection)
+	or	a,a
+	jr	nz,.dont_scroll
+	ld	hl,(scroll_amount)
+	dec	hl
+	ld	(scroll_amount),hl
 	ret
-.exit:
-	xor a,a
-	dec a
-	ret
-arrowKeys:
-	bit 0,a
-	call nz,cursorDown ;down arrow
-	bit 1,a
-	call nz,cursorLeft ;left arrow
-	bit 2,a
-	call nz,cursorRight;right arrow
-	bit 3,a
-	call nz,cursorUp   ;up arrow
-	and a,$F
+.dont_scroll:
+	dec	a
+	ld	(current_selection),a
 	ret
 
+main_move_down_return:
+	ld	hl,main_start
+	push	hl
+main_move_down:
+	ld	hl,(current_selection_absolute)
+	ld	de,(number_of_items)
+	dec	de
+	compare_hl_de
+	ret	z
+	inc	hl
+	ld	(current_selection_absolute),hl
+	ld	a,(current_selection)
+	cp	a,9					; limit items per screen
+	jr	nz,dont_scroll
+	ld	hl,(scroll_amount)
+	inc	hl
+	ld	(scroll_amount),hl
+	ret
+dont_scroll:
+	inc	a
+	ld	(current_selection),a
+	ret
 
+main_init:
+	call	ti.ClrGetKeyHook			; clear key hooks
 
+	ld	a,screen_programs
+	ld	(current_screen),a			; start on the programs screen
+
+	ld	hl,util_get_battery
+	push	hl					; return here
+
+	ld	a,(return_info)				; let's check if returned from execution
+	cp	a,return_goto
+	ret	nz
+	ld	hl,ti.basic_prog
+	ld	a,(hl)					; check if correct program
+	cp	a,ti.ProtProgObj
+	ret	z
+	pop	bc					; pop return location
+	inc	hl
+	call	util_get_archived_name
+	call	ti.Mov9ToOP1
+	call	ti.ChkFindSym
+	jp	nc,edit_basic_program_goto
+	jp	util_get_battery

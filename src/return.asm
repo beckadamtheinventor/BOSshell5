@@ -156,4 +156,4 @@ return:
 	jr	nz,.debounce				; debounce keys
 	xor	a,a
 	ld	(ti.kbdGetKy),a				; flush keys
-	jp	bos_start
+	jp	cesium_start

@@ -81,6 +81,7 @@ edit_basic_program:
 	ldir					; copied name to ans
 	ld	hl,setting_editor_name
 	call	ti.Mov9ToOP1
+	res	prgm_is_basic,(iy + prgm_flag)	; not a basic program
 	jp	execute_program.entry		; launch the editor
 
 .no_external_editor:
@@ -88,17 +89,18 @@ edit_basic_program:
 	call	ti.ChkFindSym
 	call	ti.ChkInRam
 	jr	z,.not_archived
-	ld	a,$ff ;edit_archived
+	ld	a,edit_archived
 	ld	(edit_status),a
 	call	cesium.Arc_Unarc
 .not_archived:
 	ld	hl,hook_app_change
 	call	ti.SetAppChangeHook
+	call	util_setup_shortcuts
 	xor	a,a
 	ld	(ti.menuCurrent),a
 	call	ti.CursorOff
 	call	ti.RunIndicOff
-	call	gfx_End
+	call	lcd_normal
 	ld	hl,string_temp			; contains OP1
 	push	hl
 	ld	de,ti.progToEdit
@@ -185,5 +187,4 @@ compute_error_offset:
 	sbc	hl,bc
 	ld	(error_offset),hl
 	ret
-
 

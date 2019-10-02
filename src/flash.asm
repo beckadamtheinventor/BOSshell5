@@ -45,6 +45,29 @@ flash_lock:
 
 assume	adl = 1
 
+flash_backup_ram:
+	flash_unlock_m
+
+	ld	a,$3f
+	call	flash_erase_sector		; clean out the flash sectors
+	ld	a,$3e
+	call	flash_erase_sector
+	ld	a,$3d
+	call	flash_erase_sector
+	ld	a,$3c
+	call	flash_erase_sector
+
+	ld	hl,$d00001
+	ld	(hl),$a5
+	dec	hl
+	ld	(hl),$5a			; write some magical bytes
+	ld	de,$3c0000			; write all of ram
+	ld	bc,$40000
+	call	ti.WriteFlash
+
+	flash_lock_m
+	ret
+
 flash_erase_sector:
 	ld	bc,$f8				; lol, what a flaw
 	push	bc
@@ -61,9 +84,16 @@ flash_clear_backup:
 	ld	a,(de)
 	or	a,a
 	ret	z				; dont clear if done already
-	call flash_unlock
+	flash_unlock_m
 	call	ti.WriteFlashByte		; clear old backup
-	call flash_lock
+	flash_lock_m
 	ret
+
+string_ram_backup:
+if config_english
+	db	'Backing up...',0
+else
+	db	'Sauvegarde en cours...',0
+end if
 
 end relocate

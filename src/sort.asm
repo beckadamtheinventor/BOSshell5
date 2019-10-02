@@ -10,10 +10,13 @@ sort_vat_entry_new_loc := ti.mpLcdCrsrImage + 9
 sort_vat_entry_temp_end := ti.mpLcdCrsrImage + 12 + 15
 
 sort_vat:
+	res	sort_first_item_found,(iy + ti.asm_Flag1)
 	ld	hl,(ti.progPtr)
 .sort_next:
 	call	.find_next_item
 	ret	nc
+	bit	sort_first_item_found,(iy + ti.asm_Flag1)
+	jp	z,.first_found
 	push	hl
 	call	.skip_name
 	pop	de
@@ -95,6 +98,7 @@ sort_vat:
 	jp	.sort_next
 
 .first_found:
+	set	sort_first_item_found,(iy + ti.asm_Flag1)
 	ld	(sort_first_item_found_ptr),hl		; to make it only execute once
 	call	.skip_name
 	ld	(sort_end_of_part_ptr),hl
@@ -114,6 +118,9 @@ sort_vat:
 	ret
 
 .compare_names:						; hl and de pointers to strings output=carry if de is first
+	res	sort_first_hidden,(iy + sort_flag)
+	res	sort_second_hidden,(iy + sort_flag)
+
 	dec	hl
 	dec	de
 	ld	b,64
@@ -122,12 +129,14 @@ sort_vat:
 	jr	nc,.first_not_hidden			; check if files are hidden
 	add	a,b
 	ld	(hl),a
+	set	sort_first_hidden,(iy + sort_flag)
 .first_not_hidden:
 	ld	a,(de)
 	cp	a,b
 	jr	nc,.second_not_hidden
 	add	a,b
 	ld	(de),a
+	set	sort_second_hidden,(iy + sort_flag)
 .second_not_hidden:
 	push	hl
 	push	de
@@ -160,10 +169,14 @@ sort_vat:
 	pop	hl
 .reset_hidden_flags:
 	push	af
+	bit	sort_first_hidden,(iy + sort_flag)
+	jr	z,.first_not_hidden_check
 	ld	a,(hl)
 	sub	a,64
 	ld	(hl),a
 .first_not_hidden_check:
+	bit	sort_second_hidden,(iy + sort_flag)
+	jr	z,.second_not_hidden_check
 	ld	a,(de)
 	sub	a,64
 	ld	(de),a
