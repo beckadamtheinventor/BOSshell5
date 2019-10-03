@@ -5,7 +5,7 @@
 
 cesium_name := 'Cesium'
 cesium_version := '3.3.0'
-cesium_copyright := '(C) Matt Waltz'
+cesium_copyright := '(C) 2015-2019 Matt Waltz'
 
 include 'include/macros.inc'
 

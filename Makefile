@@ -2,8 +2,8 @@ SRC := src/cesium.asm
 
 FLAGS_ENGLISH := -i 'config_english := 1'
 FLAGS_FRENCH := -i 'config_english := 0'
-BIN_ENGLISH := BOSshell.8xp
-BIN_FRENCH := BOSshell_french.8xp
+BIN_ENGLISH := Cesium.8xp
+BIN_FRENCH := Cesium_french.8xp
 
 all: english french
 

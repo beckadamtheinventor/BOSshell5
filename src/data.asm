@@ -69,6 +69,12 @@ data_cesium_appvar:
 	db	ti.AppVarObj
 data_string_cesium_name:
 	db	cesium_name,0
+data_assoc_var:
+	db	ti.AppVarObj,"BOSassoc",0
+data_packet_var:
+	db	ti.AppVarObj,"__B",0
+data_string_no_assoc:
+	db	"No editor for file",0
 
 data_string_password:
 if config_english

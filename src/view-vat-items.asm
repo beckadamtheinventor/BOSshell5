@@ -210,9 +210,14 @@ file_uneditable:
 	push	hl
 	ld	hl,0					; hl -> program data
 temp_prgm_data_ptr := $-3
+	cp a,file_appvar
+	jr nz,.no_bos_header
+	ld a,(hl)
+	or	a,a
+	jr	z,.bos_header
+.no_bos_header:
 	inc	hl
 	inc	hl
-	ld	a,(hl)
 	cp	a,byte_jp
 	jr	z,.custom_icon
 	inc	hl
@@ -229,6 +234,7 @@ temp_prgm_data_ptr := $-3
 	jr	z,.valid_icon
 	cp	a,byte_description
 	jr	nz,.no_custom_icon
+	ld	a,(hl)
 	bit	drawing_selected,(iy + item_flag)	; check if the description should be drawn
 	jr	z,.no_custom_icon
 	inc	hl
@@ -252,6 +258,13 @@ temp_prgm_data_ptr := $-3
 .icon:
 	pop	de					; de -> language string
 	jp	draw_listed_program
+.bos_header:
+	inc hl
+	bit	drawing_selected,(iy + item_flag)	; check if the description should be drawn
+	jr	z,.no_custom_icon
+	call	gui_show_description
+	jr .no_custom_icon
+
 
 file_editable:
 	push	bc

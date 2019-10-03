@@ -75,6 +75,9 @@ execute_app_check:
 	ld	a,screen_programs
 	compare_hl_zero
 	jr	z,.new					; check if on directory
+	ld	a,(current_screen)
+	cp	a,screen_appvars
+	jp	z,execute_program
 	ld	a,screen_appvars
 	dec	hl
 	compare_hl_zero
@@ -175,12 +178,13 @@ execute_ram_backup:
 	ret
 
 execute_program:
-	ld	a,(current_screen)
-	cp	a,screen_appvars
-	jp	z,main_loop
 	call	execute_ram_backup
 	call	util_move_prgm_name_to_op1
 	call	util_backup_prgm_name
+; if it's an appvar, check BOS header
+	ld	a,(current_screen)
+	cp	a,screen_appvars
+	jp	z,execute_appvar
 .entry:							; entry point, OP1 = name
 	bit	setting_enable_shortcuts,(iy + settings_flag)
 	call	nz,ti.ClrGetKeyHook
@@ -269,3 +273,95 @@ execute_ti.basic_program:
 	call	ti.SetParserHook
 	ei
 	jp	ti.ParseInp				; run program
+
+execute_appvar:
+	ld	a,21
+	ld	(ti.OP1),a
+	call	ti.ChkFindSym
+	jp	c,main_loop
+	ld	a,(de)
+	or	a,a
+	jr	z,.bos_appvar
+; Maybe assembly?
+	cp	a,$EF
+	jp	nz,main_loop
+	inc	de
+	ld	a,(de)
+	cp	a,$7B
+	jp	nz,main_loop
+; Yup, run it.
+	jp	execute_program.entry
+.bos_appvar:
+	inc de
+	push de
+	ld	hl,data_assoc_var
+	call	util_find_var
+	jr	c,.no_assoc
+	ld	hl,(hl)
+	ld	(.assoc_loop_smc),hl
+	inc de
+	pop	hl
+.assoc_loop:
+	push	hl
+	push	de
+	call	.compare7
+	pop	bc
+	jr z,.run_assoc
+.assoc_loop_smc:=$+1
+	ld	hl,0
+	ld	bc,16
+	xor	a,a
+	sbc	hl,bc
+	ld	(.assoc_loop_smc),hl
+	pop	hl
+	jr c,.no_assoc
+	jr	nz,.assoc_loop
+;No file association found
+.no_assoc:
+	ld	hl,data_string_no_assoc
+	call	gui_show_description
+	call	util_get_key
+;There was a problem
+	jp	main_loop
+.run_assoc:
+	push	bc
+	pop	hl
+	pop	bc
+	call	util_find_var
+	jr	c,.no_assoc
+	call	ti.PushOP1
+	ld	hl,data_packet_var
+	call	ti.Mov9ToOP1
+	ld	hl,11
+	call	ti.CreateAppVar
+	xor	a,a
+	ld	(de),a
+	inc	de
+	call	ti.PopOP1
+	ld	hl,ti.OP1
+	ld	bc,9
+	ldir
+	ld (de),a
+	res	prgm_is_basic, (iy + prgm_flag)
+	call	execute_program.entry
+	ld	hl,data_packet_var
+	call	ti.Mov9ToOP1
+	jp	ti.DelVar
+;compare the 7 bytes at DE with the 7 bytes at HL
+.compare7:
+	ld	b,7
+.compareloop:
+	ld	a,(de)
+	or	a,a
+	jr	z,.comparefinal
+	cp	a,(hl)
+	ret	nz
+	inc	hl
+	inc	de
+	djnz	.compareloop
+	ret
+.comparefinal:
+	ld	a,(hl)
+	or	a,a
+	ret
+

@@ -181,6 +181,7 @@ file_dir := 5
 file_appvar := 6
 file_usb_dir := 7
 
+
 byte_icon := $01
 byte_description := $02
 byte_jp := $c3
