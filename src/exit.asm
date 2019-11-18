@@ -5,12 +5,10 @@ exit_full:
 	exit_cleanup.run
 
 relocate exit_cleanup, ti.mpLcdCrsrImage + 500
-	bit	setting_ram_backup,(iy + settings_flag)
-	call	nz,flash_clear_backup
-	call	lcd_normal
+	call	gfx_End
+	call	libload_unload
 	call	ti.ClrParserHook
 	call	ti.ClrAppChangeHook
-	call	util_setup_shortcuts
 	call	ti.ClrScrn
 	call	ti.HomeUp
 	res	ti.useTokensInString,(iy + ti.clockFlags)

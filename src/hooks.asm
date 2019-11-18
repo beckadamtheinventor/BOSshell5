@@ -49,7 +49,7 @@ hook_app_change:
 .dont_archive:
 	ld	a,return_prgm
 	ld	(return_info),a
-	jp	cesium_start
+	jp	bos_start
 
 hook_get_key:
 	db	$83
@@ -72,18 +72,10 @@ hook_get_key:
 	ret
 .check_for_shortcut_key:
 	pop	af
-	cp	a,ti.skStat
-	jp	z,hook_password
 	cp	a,ti.skGraph
 	jr	z,hook_show_labels
-	cp	a,ti.skPrgm
+	cp	a,ti.skMatrix
 	jq	z,hook_execute_cesium
-	cp	a,ti.sk8
-	jq	z,hook_backup_ram
-	cp	a,ti.sk5
-	jq	z,hook_clear_backup
-	cp	a,ti.sk2
-	jq	z,hook_restore_ram
 	ret
 
 label_number     := ti.cursorImage + 3
@@ -430,15 +422,6 @@ hook_get_key_none:
 	dec	a
 	ret
 
-hook_backup_ram:
-	call	ti.os.ClearStatusBarLow
-	ld	hl,string_ram_backup
-	call	helper_vputs_toolbar
-	call	flash_code_copy
-	call	flash_backup_ram
-	call	ti.DrawStatusBar
-	jr	hook_get_key_none
-
 hook_execute_cesium:
 	ld	iy,ti.flags
 	call	ti.CursorOff
@@ -459,7 +442,7 @@ hook_execute_cesium:
 	call	ti.RunIndicOff
 	xor	a,a
 	ld	(ti.menuCurrent),a		; make sure we aren't on a menu
-	ld	hl,data_string_cesium_name	; execute app
+	ld	hl,data_string_bos_name	; execute app
 	ld	de,$d0082e			; I have absolutely no idea what this is
 	push	de
 	ld	bc,8
@@ -473,75 +456,6 @@ hook_execute_cesium:
 	call	ti.NewContext0
 	ld	a,ti.kClear
 	jp	ti.JForceCmd
-
-hook_password:
-	ld	hl,data_cesium_appvar
-	call	ti.Mov9ToOP1
-	call	ti.ChkFindSym
-	call	ti.ChkInRam
-	push	af
-	call	z,cesium.Arc_Unarc		; archive it
-	pop	af
-	jr	z,hook_password			; find the settings appvar
-	ex	de,hl
-	ld	de,9
-	add	hl,de
-	ld	e,(hl)
-	add	hl,de
-	inc	hl
-	inc	hl
-	inc	hl
-	ld	de,settings_data
-	ld	bc,settings_size
-	ldir					; copy in the password
-.wrong:
-	call	ti.CursorOff
-	ld	a,ti.cxCmd
-	call	ti.NewContext0
-	call	ti.CursorOff
-	call	ti.ClrScrn
-	call	ti.HomeUp
-	ld	hl,data_string_password
-	call	ti.PutS
-	di
-	call	ti.EnableAPD
-	ld	a,1
-	ld	hl,ti.apdSubTimer
-	ld	(hl),a
-	inc	hl
-	ld	(hl),a
-	set	ti.apdRunning,(iy + ti.apdFlags)
-	ei
-	ld	hl,setting_password
-	ld	a,(hl)				; password length
-	or	a,a
-	jr	z,.correct
-	ld	b,a
-	ld	c,0
-	inc	hl
-.get_user_password:
-	call	.get_key
-	cp	a,(hl)
-	inc	hl
-	jr	z,.draw_character
-	inc	c
-.draw_character:
-	ld	a,'*'
-	call	ti.PutC
-	djnz	.get_user_password
-	dec	c
-	inc	c
-	jr 	nz,.wrong
-.correct:
-	ld	a,ti.kClear
-	jp	ti.SendKPress
-.get_key:
-	push	hl
-   	call	ti.GetCSC
-	pop	hl
-	or	a,a
-	jr	z,.get_key
-	ret
 
 hook_home:
 	db	$83
@@ -574,7 +488,7 @@ hook_home:
 	pop	bc
 	ret
 .return_cesium_app:
-	cesium_code.copy
+	bos_code.copy
 	jp	return.user_exit
 .save:
 	xor	a,a

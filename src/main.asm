@@ -1,120 +1,140 @@
-; main cesium process routines
 
-main_cesium:
-	call	lcd_init
-	call	main_init
-main_settings:
-	call	settings_load
-main_find:
-	call	find_files
-main_start:
-	call	gui_main
-	call	util_setup_apd
-main_loop:
-	call	util_get_key
-	cp	a,ti.skClear
-	jp	z,.check_exit
-	cp	a,ti.skMode
-	jp	z,settings_show
-	cp	a,ti.skUp
-	jp	z,main_move_up_return
-	cp	a,ti.skDown
-	jp	z,main_move_down_return
-	cp	a,ti.skPrgm
-	jp	z,usb_fat_transfer
-	cp	a,ti.sk2nd
-	jp	z,execute_item
-	cp	a,ti.skEnter
-	jp	z,execute_item_alternate
-	cp	a,ti.skGraph
-	jp	z,feature_item_rename
-	cp	a,ti.skYequ
-	jp	z,feature_item_new
-	cp	a,ti.skAlpha
-	jp	z,feature_item_attributes
-	cp	a,ti.skZoom
-	jp	z,feature_item_edit
-	cp	a,ti.skDel
-	jp	z,feature_item_delete
-	cp	a,ti.skTrace
-	jp	z,feater_setup_editor
-	sub	a,ti.skAdd
-	jp	c,main_loop
-	cp	a,ti.skMath - ti.skAdd + 1
-	jp	nc,main_loop
-	call	search_alpha_item
-	jp	z,main_loop
-	jp	main_start
-.check_exit:
-	ld	a,(current_screen)
-	cp	a,screen_usb
-	jp	z,usb_detach
-	jp	exit_full
+kb_Data:=$F50010
 
-main_move_up_return:
-	ld	hl,main_start
-	push	hl
-main_move_up:
-	ld	hl,(current_selection_absolute)
-	compare_hl_zero
-	ret	z					; check if we are at the top
-	dec	hl
-	ld	(current_selection_absolute),hl
-	ld	a,(current_selection)
-	or	a,a
-	jr	nz,.dont_scroll
-	ld	hl,(scroll_amount)
-	dec	hl
-	ld	(scroll_amount),hl
-	ret
-.dont_scroll:
-	dec	a
-	ld	(current_selection),a
-	ret
-
-main_move_down_return:
-	ld	hl,main_start
-	push	hl
-main_move_down:
-	ld	hl,(current_selection_absolute)
-	ld	de,(number_of_items)
-	dec	de
-	compare_hl_de
-	ret	z
-	inc	hl
-	ld	(current_selection_absolute),hl
-	ld	a,(current_selection)
-	cp	a,9					; limit items per screen
-	jr	nz,dont_scroll
-	ld	hl,(scroll_amount)
-	inc	hl
-	ld	(scroll_amount),hl
-	ret
-dont_scroll:
-	inc	a
-	ld	(current_selection),a
-	ret
-
+init:
+	call libload_load
+	jr z,main_init
+	call ti.HomeUp
+	call ti.RunIndicOff
+	ld hl,.needlibload
+	call ti.PutS
+	xor a,a
+	ld (ti.curCol),a
+	inc a
+	ld (ti.curRow),a
+	call ti.PutS
+.GetCSC:
+	call ti.GetCSC
+	or a,a
+	jr z,.GetCSC
+	jp exit_full
+.needlibload:
+	db "Need libLoad",0
+	db "tiny.cc/clibs",0
 main_init:
-	call	ti.ClrGetKeyHook			; clear key hooks
+	call ti.HomeUp
+	call ti.RunIndicOff
+	call gfx_Begin
+	call ti_CloseAll
+	call config_load
+	jr nz,.loaded
+	ld hl,data_default_colors
+	ld de,config_colors
+	ldi
+	ldi
+	ldi
+	ldi
+	xor a,a
+	sbc hl,hl
+	ex hl,de
+	ld hl,cursor
+	ld (hl),a
+	inc hl
+	ld (hl),de
+.loaded:
+	ld hl,_ico_cursor
+	ld (cursor+4),hl
+	call gfx_SetDrawBuffer
+	ld l,255
+	push hl
+	call gfx_SetTransparentColor
+	ld l,0
+	ex (sp),hl
+	call gfx_SetTextTransparentColor
+	ld hl,(config_colors)
+	ex (sp),hl
+	call gfx_SetTextBGColor
+	ld hl,(config_colors+1)
+	ex (sp),hl
+	call gfx_SetTextFGColor
+	pop hl
+main_loop:
+	ld hl,(config_colors)
+	push hl
+	call gfx_FillScreen
 
-	ld	a,screen_programs
-	ld	(current_screen),a			; start on the programs screen
+;draw the cursor
+	ld hl,(cursor+3)
+	ex (sp),hl
+	ld hl,(cursor)
+	push hl
+	ld hl,(cursor+4)
+	push hl
+	call gfx_TransparentSprite
+	pop hl
+	pop hl
+	pop hl
 
-	ld	hl,util_get_battery
-	push	hl					; return here
+	call drawHomeScreen
 
-	ld	a,(return_info)				; let's check if returned from execution
-	cp	a,return_goto
-	ret	nz
-	ld	hl,ti.basic_prog
-	ld	a,(hl)					; check if correct program
-	cp	a,ti.ProtProgObj
-	ret	z
-	pop	bc					; pop return location
-	inc	hl
-	call	util_get_archived_name
-	call	ti.Mov9ToOP1
-	call	ti.ChkFindSym
-	jp	nc,edit_basic_program_goto
-	jp	util_get_battery
+	call gfx_SwapDraw
+
+	call kb_Scan
+	ld hl,kb_Data+2
+; Group 1
+	ld a,(hl)
+	inc hl
+	inc hl
+	bit 0,a
+	jp nz,right_click
+	bit 1,a
+	jp nz,left_click
+	bit 5,a
+	jp nz,left_click
+	bit 6,a
+	jp nz,settings_menu
+	bit 7,a
+	jp nz,delete_file
+; Group 2
+	ld a,(hl)
+	inc hl
+	inc hl
+	bit 7,a
+	jp nz,right_click
+; Group 3
+	ld a,(hl)
+	inc hl
+	inc hl
+; Group 4
+	ld a,(hl)
+	inc hl
+	inc hl
+; Group 5
+	ld a,(hl)
+	inc hl
+	inc hl
+; Group 6
+	ld a,(hl)
+	inc hl
+	inc hl
+; Is the clear key pressed?
+	bit 6,a
+	jr nz,.exit
+; Group 7
+	ld a,(hl)
+	bit 0,a
+	call nz,cursorDown ;down arrow
+	bit 1,a
+	call nz,cursorLeft ;left arrow
+	bit 2,a
+	call nz,cursorRight;right arrow
+	bit 3,a
+	call nz,cursorUp   ;up arrow
+	jq main_loop
+.exit:
+	call config_save
+	call ti_CloseAll
+	jp exit_full
+
+
+

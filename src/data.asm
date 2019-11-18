@@ -65,29 +65,113 @@ data_lcd_init:
 	pop	af
 	ret
 
-data_cesium_appvar:
-	db	ti.AppVarObj
-data_string_cesium_name:
-	db	cesium_name,0
-data_assoc_var:
-	db	ti.AppVarObj,"BOSassoc",0
-data_packet_var:
-	db	ti.AppVarObj,"__B",0
-data_string_no_assoc:
-	db	"No editor for file",0
-
-data_string_password:
-if config_english
-	db	'Password:',0
-else
-	db	'Mot de passe:',0
-end if
-
 data_string_quit1:
 	db	'1:',0,'Quit',0
 data_string_quit2:
 	db	'2:',0,'Goto',0
 
+data_string_bos_name:
+	db 'BOSshell'
+	db ti.AppVarObj
+data_config_appvar:
+	db 'BOSconfg'
+	db ti.AppVarObj
+data_packet_appvar:
+	db '__B',0
+	db ti.AppVarObj
+data_folds_appvar:
+	db 'BOSfolds'
+	db ti.AppVarObj
+data_dirs_appvar:
+	db 'BOSdirs',0
+	db ti.AppVarObj
+data_temp_appvar:
+	db '__tmp',0
+data_open_w:
+	db 'w',0
+data_open_wplus:
+	db 'w+',0
+data_open_r:
+	db 'r',0
+data_open_rplus:
+	db 'r+',0
+data_open_a:
+	db 'a',0
+data_open_aplus:
+	db 'a+',0
+
+internal_editor:=$FF
+
+data_default_colors:
+	db $BF,$20,$C0,$07
+data_default_assoc:
+.bin:
+	db 'ximg', 7 dup 0, internal_editor, 'BOSximgE'
+	db 'xgif', 7 dup 0, internal_editor, 'BOSxgifV'
+	db 'prgm', 7 dup 0, internal_editor, 'BOSptoav'
+	db 'DCS',$3E,$3F, 6 dup 0, internal_editor, 'BOSDCSit'
+	db 'BBAS',$3E,$3F, 5 dup 0, 6, 'BOSBASIC'
+	db 'bbas', 7 dup 0, 6, 'BOSBASIC'
+.len:=$-.bin
+data_default_dirs:
+.bin:
+	db 'root',0
+.len:=$-.bin
+data_folds_version:=5
+data_dirs_version:=5
+
+data_credits:
+	db 7      ;number of lines
+	dl .line_1
+	dl .line_2
+	dl .line_3
+	dl .line_4
+	dl .line_5
+	dl .line_6
+	dl .line_7
+.line_1:
+	db 'BOSshell v500b2-A',0
+.line_2:
+	db 'The dev: beckadamtheinventor',0
+.line_3:
+	db 'Cesium code: MateoC',0
+.line_4:
+	db 'Thanks to: jcgter777, LAX18, SM84CE',0
+.line_5:
+	db 'and many others',0
+.line_6:
+	db 'special thanks to KermPhD',0
+.line_7:
+	db 'Everyone at Cemetech: You\'re awesome! :D',0
+
+include 'gfx/bos_gfx.inc'
+
+string_temp:=ti.pixelShadow
+string_other_temp:=string_temp+64
+prgm_data_ptr:=string_other_temp+64
+prgm_real_size:=prgm_data_ptr+3
+prgm_ptr:=prgm_real_size+3
+persistent_sp_error:=prgm_ptr+3
+persistent_sp:=persistent_sp_error+3
+edit_status:=persistent_sp+3
+edit_mode:=edit_status+1
+return_info:=edit_mode			; yes this is right
+backup_prgm_name:=return_info+1
+backup_home_hook_location:=backup_prgm_name+11
+
+crc_sum:=backup_home_hook_location+3
+config_colors:=crc_sum+4
+AppLen:=config_colors+4
+AppCRC32:=AppLen+3
+setting_editor_name:=AppCRC32+4
+cursor:=setting_editor_name+11
+tempBuffer:=cursor+6
+
+config_password:=tempBuffer+64
+config_password_len:=64
+temp_ptr:=config_password+config_password_len
+
 ; data in this location is allowed to be modified at runtime
 	app_data
+
 

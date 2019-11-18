@@ -1,0 +1,30 @@
+opened convpng.ini
+
+--- bos_gfx (ASM) ---
+using built-in xlibc palette ...
+warning: might ignore transparent color value for a fixed palette.
+transparent color index : 255
+transparent color : 0xFFFF
+14:
+ ico_appvar : converted!
+ ico_asm : converted!
+ ico_basic : converted!
+ ico_bosbas : converted!
+ ico_c : converted!
+ ico_cursor : converted!
+ ico_data : converted!
+ ico_folder : converted!
+ ico_ice : converted!
+ ico_link : converted!
+ ico_prgm : converted!
+ ico_text : converted!
+ ico_xani : converted!
+ ico_ximg : converted!
+
+converted in 0 s
+
+[warning] image quality might be too low.
+please try grouping similar images, reducing image colors, 
+or selecting a better palette if conversion is not ideal.
+
+finished!
