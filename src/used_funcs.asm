@@ -16,6 +16,8 @@ gfx_SwapDraw:
 	jp 30
 gfx_Blit:
 	jp 33
+gfx_BlitArea:
+	jp 39
 gfx_PrintInt:
 	jp 45
 gfx_PrintUInt:
@@ -102,6 +104,10 @@ ti_GetSize:
 	jp 48
 ti_GetDataPtr:
 	jp 54
+ti_Detect:
+	jp 57
+ti_DetectVar:
+	jp 60
 ti_DetectAny:
 	jp 87
 ti_Rename:

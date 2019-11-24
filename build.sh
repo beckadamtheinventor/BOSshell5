@@ -6,6 +6,10 @@ name='BOSSHELL.8xp'
 
 mkdir "bin" || echo ""
 
+convpng
+
+mv -f ./bos_gfx.* ./src/gfx/
+
 echo "compiling to $name"
 ~/CEdev/bin/fasmg src/bos.asm bin/$name
 echo $name

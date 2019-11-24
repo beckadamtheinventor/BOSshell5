@@ -1,17 +1,4 @@
 
-config_change_colors:
-	ret
-.text:
-	db 'main background color?',0
-	dl input_number_routine, config_colors
-	db 'main text color?',0
-	dl input_number_routine, config_colors+1
-	db 'secondary text color?',0
-	dl input_number_routine, config_colors+2
-	db 'window background color?',0
-	dl input_number_routine, config_colors+3
-	db 0
-
 
 config_save:
 	ld hl,data_config_appvar-1
@@ -27,12 +14,18 @@ config_save:
 	pop hl
 	ld l,a
 	push hl
-	ld hl,config_password_len+6
+	ld hl,config_password_len+11
 	push hl
 	call ti_Resize
+	ld hl,10
+	ex (sp),hl
+	or a,a
+	sbc hl,hl
+	push hl
+	call ti_Seek
 	pop hl
 	ld hl,1
-	push hl
+	ex (sp),hl
 	ld hl,data_default_assoc.len
 	push hl
 	ld hl,data_default_assoc
@@ -60,8 +53,13 @@ config_save:
 	ld hl,config_colors
 	push hl
 	call ti_Write
-	pop hl
 	ld hl,cursor
+	ex (sp),hl
+	call ti_Write
+	pop hl
+	ld hl,3
+	ex (sp),hl
+	ld hl,CurrentHomePage
 	push hl
 	call ti_Write
 	pop hl
@@ -82,7 +80,7 @@ config_load:
 	pop hl
 	pop hl
 	or a,a
-	ret z
+	jr z,.create
 	ld l,a
 	push hl
 	ld hl,1
@@ -92,15 +90,41 @@ config_load:
 	ld hl,config_colors
 	push hl
 	call ti_Read
-	pop hl
 	ld hl,cursor
+	ex (sp),hl
+	call ti_Read
+	pop hl
+	ld hl,3
+	ex (sp),hl
+	ld hl,CurrentHomePage
 	push hl
 	call ti_Read
 	pop hl
 	pop hl
 	pop hl
+	call ti_GetDataPtr
+	ld (fileAssociationTable),hl
 	call ti_Close
 	pop hl
-	xor a,a
-	inc a
 	ret
+.create:
+	ld hl,data_default_colors
+	ld de,config_colors
+	ldi
+	ldi
+	ldi
+	ldi
+	xor a,a
+	sbc hl,hl
+	ex hl,de
+	ld hl,cursor
+	ld (hl),a
+	inc hl
+	ld (hl),de
+	or a,a
+	sbc hl,hl
+	ld (CurrentHomePage),hl
+	ld hl,data_default_assoc
+	ld (fileAssociationTable),hl
+	ret
+

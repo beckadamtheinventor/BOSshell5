@@ -3,6 +3,12 @@ right_click:
 	jp main_loop
 
 left_click:
+	call getCursorSelection
+	cp a,$FF
+	jp z,main_loop
+	call opening_file_hl
+	jp c,main_loop
+	call openfile
 	jp main_loop
 
 clickWaitLoop:

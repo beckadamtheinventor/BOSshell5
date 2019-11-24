@@ -6,11 +6,7 @@ include 'include/ti84pceg.inc'
 format ti executable "BOSSHELL"
 include 'include/app.inc'
 include 'include/macros.inc'
-include 'flags.inc'
 
-
-ld hl,shell_name
-call ti.DeleteApp
 
 ; Install me
 app_create

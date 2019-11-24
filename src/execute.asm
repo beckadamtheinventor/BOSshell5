@@ -1,5 +1,6 @@
 execute_item_hl:
 	call ti.Mov9ToOP1
+execute_item_op1:
 	call	flash_code_copy
 	ld a,(ti.OP1)
 	cp a,21
@@ -13,6 +14,61 @@ execute_item_hl:
 	ret
 .exec:
 	jr	execute_program.entry
+
+opening_file_hl:
+	ld (currentOpeningFile),hl
+	call ti.Mov9ToOP1
+	jp ti.ChkFindSym
+
+editfile:
+	ld a,1
+	jr openfile.entry
+openfile:
+	xor a,a
+.entry:
+	ld (openfile.openmode),a
+	call getFileAssociation
+	ret nz
+	ld a,(hl)
+	cp a,internal_editor
+	jr z,.internal
+	ld hl,0
+currentOpeningFile:=$-3
+	ld a,0
+.openmode:=$-1
+	call util_setup_packet
+	jr .execute
+.internal:
+	inc hl
+	ld a,(hl)
+	or a,a
+	ret nz
+.execute:
+	ld hl,(currentOpeningFile)
+	jp execute_item_hl
+
+; input de = file extension
+; return nz when no association found
+; return hl = associated program
+getFileAssociation:
+	ld hl,0
+fileAssociationTable:=$-3
+	jr .entry
+.loop:
+	ld bc,9
+	add hl,bc
+.entry:
+	ld a,(hl)
+	or a,a
+	jr z,.noassoc
+	push de
+	call strcompare
+	pop de
+	jr nz,.loop
+	ret
+.noassoc:
+	inc a
+	ret
 
 execute_program:
 	call	util_move_prgm_name_to_op1

@@ -27,24 +27,8 @@ main_init:
 	call gfx_Begin
 	call ti_CloseAll
 	call config_load
-	jr nz,.loaded
-	ld hl,data_default_colors
-	ld de,config_colors
-	ldi
-	ldi
-	ldi
-	ldi
-	xor a,a
-	sbc hl,hl
-	ex hl,de
-	ld hl,cursor
-	ld (hl),a
-	inc hl
-	ld (hl),de
-.loaded:
 	ld hl,_ico_cursor
 	ld (cursor+4),hl
-	call gfx_SetDrawBuffer
 	ld l,255
 	push hl
 	call gfx_SetTransparentColor
@@ -58,27 +42,18 @@ main_init:
 	ex (sp),hl
 	call gfx_SetTextFGColor
 	pop hl
-main_loop:
+main_draw:
+	call countHomeItems
+	call gfx_SetDrawBuffer
 	ld hl,(config_colors)
 	push hl
 	call gfx_FillScreen
-
-;draw the cursor
-	ld hl,(cursor+3)
-	ex (sp),hl
-	ld hl,(cursor)
-	push hl
-	ld hl,(cursor+4)
-	push hl
-	call gfx_TransparentSprite
 	pop hl
-	pop hl
-	pop hl
-
 	call drawHomeScreen
-
-	call gfx_SwapDraw
-
+	call gfx_SetDrawScreen
+	call gfx_BlitBuffer
+main_loop:
+	call drawCursor
 	call kb_Scan
 	ld hl,kb_Data+2
 ; Group 1
@@ -117,11 +92,17 @@ main_loop:
 	ld a,(hl)
 	inc hl
 	inc hl
+	bit 1,a
+	jp nz,nextpage ;+ key
+	bit 2,a
+	jp nz,prevpage ;- key
 ; Is the clear key pressed?
 	bit 6,a
 	jr nz,.exit
 ; Group 7
 	ld a,(hl)
+	and a,$f
+	call nz,eraseCursor
 	bit 0,a
 	call nz,cursorDown ;down arrow
 	bit 1,a
@@ -130,11 +111,41 @@ main_loop:
 	call nz,cursorRight;right arrow
 	bit 3,a
 	call nz,cursorUp   ;up arrow
-	jq main_loop
+	jp main_loop
 .exit:
 	call config_save
 	call ti_CloseAll
 	jp exit_full
 
+nextpage:
+	ld hl,(homeSkip)
+	ld de,4
+	add hl,de
+	ld de,0
+maxHomeSkip:=$-3
+	or a,a
+	sbc hl,de
+	jr nc,.done
+	add hl,de
+	ld (homeSkip),hl
+.done:
+	jp main_draw
+
+prevpage:
+	ld hl,(homeSkip)
+	ld de,4
+	or a,a
+	sbc hl,de
+	jr nc,.done
+	or a,a
+	sbc hl,hl
+	jr .set
+.done:
+	ld a,l
+	and a,$FC
+	ld l,a
+.set:
+	ld (homeSkip),hl
+	jp main_draw
 
 

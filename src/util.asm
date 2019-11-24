@@ -5,6 +5,17 @@ util_find_var:
 util_install_error_handler:
 	ret
 
+; return z if strings are equal
+strcompare:
+	ld a,(de)
+	inc de
+	cpi
+	ret nz
+	or a,a
+	jr nz,strcompare
+	inc hl
+	ret
+
 ; HL points to file entry
 ; A is open/edit mode
 util_setup_packet:
@@ -27,6 +38,7 @@ util_setup_packet:
 	ex hl,de
 	pop bc
 	pop af
+	push de
 	push bc
 	ld l,a
 	push hl
@@ -34,6 +46,7 @@ util_setup_packet:
 	pop hl
 	pop bc
 	pop hl
+	pop de
 	push bc
 	ld de,11
 	push de

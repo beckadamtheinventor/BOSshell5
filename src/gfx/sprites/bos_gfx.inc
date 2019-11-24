@@ -12,7 +12,6 @@ bos_gfx_transparent_color_index equ 255
 #include "ico_data.asm" ; 258 bytes
 #include "ico_folder.asm" ; 258 bytes
 #include "ico_ice.asm" ; 258 bytes
-#include "ico_ice_src.asm" ; 258 bytes
 #include "ico_link.asm" ; 258 bytes
 #include "ico_locked_prgm.asm" ; 258 bytes
 #include "ico_prgm.asm" ; 258 bytes

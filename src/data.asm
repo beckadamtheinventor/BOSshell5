@@ -99,19 +99,29 @@ data_open_a:
 	db 'a',0
 data_open_aplus:
 	db 'a+',0
+data_no_sprite:
+	db 1,1,$FF
+data_dcs_header:
+	db $3E,'DCS',$3F,$2A,0
+data_color_table:
+	db	$ff,$18,$e0,$00,$f8,$24,$e3,$61,$09,$13,$e6,$ff,$b5,$6b,$6a,$4a
 
 internal_editor:=$FF
+type_folder:=$FE
+type_link:=$FD
 
 data_default_colors:
-	db $BF,$20,$C0,$07
+	db $BF,$08,$07,$C0
 data_default_assoc:
 .bin:
-	db 'ximg', 7 dup 0, internal_editor, 'BOSximgE'
-	db 'xgif', 7 dup 0, internal_editor, 'BOSxgifV'
-	db 'prgm', 7 dup 0, internal_editor, 'BOSptoav'
-	db 'DCS',$3E,$3F, 6 dup 0, internal_editor, 'BOSDCSit'
-	db 'BBAS',$3E,$3F, 5 dup 0, 6, 'BOSBASIC'
-	db 'bbas', 7 dup 0, 6, 'BOSBASIC'
+	db 'ximg', 0, 21, 'BOSximgE'
+	db 'xgif', 0, 21, 'BOSxgifV'
+	db 'prgm', 0, 21, 'BOSptoav'
+	db 'BBAS',$3E,$3F, 0, 6, 'BOSBASIC'
+	db 'bbas', 0, 6, 'BOSBASIC'
+	db 'ZIPPER',0, 6, 'ZIPPER', 0, 0
+	db $EF, $7B, 0, internal_editor, 8 dup 0
+	db 0,0
 .len:=$-.bin
 data_default_dirs:
 .bin:
@@ -119,6 +129,10 @@ data_default_dirs:
 .len:=$-.bin
 data_folds_version:=5
 data_dirs_version:=5
+data_bos_folds_header:
+	db "BOSfolds v500",0,0,0
+.len:=16
+
 
 data_credits:
 	db 7      ;number of lines
@@ -159,17 +173,18 @@ return_info:=edit_mode			; yes this is right
 backup_prgm_name:=return_info+1
 backup_home_hook_location:=backup_prgm_name+11
 
-crc_sum:=backup_home_hook_location+3
-config_colors:=crc_sum+4
-AppLen:=config_colors+4
-AppCRC32:=AppLen+3
-setting_editor_name:=AppCRC32+4
+config_colors:=backup_home_hook_location+3
+setting_editor_name:=config_colors+4
 cursor:=setting_editor_name+11
 tempBuffer:=cursor+6
 
 config_password:=tempBuffer+64
 config_password_len:=64
 temp_ptr:=config_password+config_password_len
+HomeDataVarPtr:=temp_ptr+3
+CurrentHomePage:=HomeDataVarPtr+3
+homeNameTemp:=CurrentHomePage+3
+;next:=homeNameTemp+48
 
 ; data in this location is allowed to be modified at runtime
 	app_data
