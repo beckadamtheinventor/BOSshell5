@@ -5,7 +5,7 @@ config_save:
 	call ti.Mov9ToOP1
 	call ti.ChkFindSym
 	jr nc,.okay
-	ld hl,data_open_a
+	ld hl,data_open_w
 	push hl
 	ld hl,data_config_appvar
 	push hl
@@ -14,10 +14,10 @@ config_save:
 	pop hl
 	ld l,a
 	push hl
-	ld hl,config_password_len+11
+	ld hl,config_password_len+14
 	push hl
 	call ti_Resize
-	ld hl,10
+	ld hl,13
 	ex (sp),hl
 	or a,a
 	sbc hl,hl
@@ -62,6 +62,9 @@ config_save:
 	ld hl,CurrentHomePage
 	push hl
 	call ti_Write
+	ld hl,homeSkip
+	ex (sp),hl
+	call ti_Write
 	pop hl
 	pop hl
 	pop hl
@@ -99,6 +102,9 @@ config_load:
 	ld hl,CurrentHomePage
 	push hl
 	call ti_Read
+	ld hl,homeSkip
+	ex (sp),hl
+	call ti_Read
 	pop hl
 	pop hl
 	pop hl
@@ -124,6 +130,7 @@ config_load:
 	or a,a
 	sbc hl,hl
 	ld (CurrentHomePage),hl
+	ld (homeSkip),hl
 	ld hl,data_default_assoc
 	ld (fileAssociationTable),hl
 	ret

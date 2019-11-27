@@ -65,6 +65,45 @@ data_lcd_init:
 	pop	af
 	ret
 
+lcd_init:
+	call	ti.RunIndicOff
+	di					; turn off indicator
+	call	lcd_clear
+.setup:
+	ld	a,ti.lcdBpp8
+	ld	(ti.mpLcdCtrl),a		; operate in 8bpp
+	ld	hl,ti.mpLcdPalette
+	ld	b,0
+.loop:
+	ld	d,b
+	ld	a,b
+	and	a,192
+	srl	d
+	rra
+	ld	e,a
+	ld	a,31
+	and	a,b
+	or	a,e
+	ld	(hl),a
+	inc	hl
+	ld	(hl),d
+	inc	hl
+	inc	b
+	jr	nz,.loop
+	ret
+
+lcd_normal:
+	call lcd_clear
+	ld	a,$2d
+	ld	(ti.mpLcdCtrl),a
+	jp	ti.DrawStatusBar
+
+lcd_clear:
+	ld	hl,ti.vRam
+	ld	bc,((ti.lcdWidth * ti.lcdHeight) * 2) - 1
+	ld	a,255
+	jp	ti.MemSet
+
 data_string_quit1:
 	db	'1:',0,'Quit',0
 data_string_quit2:
@@ -117,11 +156,9 @@ data_default_assoc:
 	db 'ximg', 0, 21, 'BOSximgE'
 	db 'xgif', 0, 21, 'BOSxgifV'
 	db 'prgm', 0, 21, 'BOSptoav'
-	db 'BBAS',$3E,$3F, 0, 6, 'BOSBASIC'
 	db 'bbas', 0, 6, 'BOSBASIC'
 	db 'ZIPPER',0, 6, 'ZIPPER', 0, 0
-	db $EF, $7B, 0, internal_editor, 8 dup 0
-	db 0,0
+	dl 0
 .len:=$-.bin
 data_default_dirs:
 .bin:
@@ -184,7 +221,7 @@ temp_ptr:=config_password+config_password_len
 HomeDataVarPtr:=temp_ptr+3
 CurrentHomePage:=HomeDataVarPtr+3
 homeNameTemp:=CurrentHomePage+3
-;next:=homeNameTemp+48
+;next:=homeNameTemp+144
 
 ; data in this location is allowed to be modified at runtime
 	app_data

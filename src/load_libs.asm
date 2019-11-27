@@ -48,6 +48,5 @@ libload_name:
 .len := $ - .
 
 ; remove loaded libraries from usermem
-libload_unload:
-	jp	util_delete_prgm_from_usermem
+libload_unload:=util_delete_prgm_from_usermem
 

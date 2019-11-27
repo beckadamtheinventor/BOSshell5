@@ -2,10 +2,10 @@
 kb_Data:=$F50010
 
 init:
-	call libload_load
-	jr z,main_init
 	call ti.HomeUp
 	call ti.RunIndicOff
+	call libload_load
+	jr z,main_init
 	ld hl,.needlibload
 	call ti.PutS
 	xor a,a
@@ -22,10 +22,9 @@ init:
 	db "Need libLoad",0
 	db "tiny.cc/clibs",0
 main_init:
-	call ti.HomeUp
-	call ti.RunIndicOff
-	call gfx_Begin
+	call lcd_init
 	call ti_CloseAll
+	call delete_packet_file
 	call config_load
 	ld hl,_ico_cursor
 	ld (cursor+4),hl
@@ -96,9 +95,8 @@ main_loop:
 	jp nz,nextpage ;+ key
 	bit 2,a
 	jp nz,prevpage ;- key
-; Is the clear key pressed?
 	bit 6,a
-	jr nz,.exit
+	jr nz,.exit ; Is the clear key pressed?
 ; Group 7
 	ld a,(hl)
 	and a,$f

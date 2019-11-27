@@ -13,7 +13,13 @@ strcompare:
 	ret nz
 	or a,a
 	jr nz,strcompare
-	inc hl
+	ret
+
+delete_packet_file:
+	ld hl,data_packet_appvar
+	push hl
+	call ti_Delete
+	pop hl
 	ret
 
 ; HL points to file entry
@@ -112,13 +118,14 @@ util_move_prgm_to_usermem:
 	inc	a
 	ret
 
+
 util_check_free_ram:
 	push	hl
 	ld	de,128
 	add	hl,de				; for safety
 	call	ti.EnoughMem
 	pop	hl
-	ret	nc
+	ret
 	;call	gui_ram_error
 	;jr	util_delay_one_second
 
@@ -278,7 +285,4 @@ util_num_convert:
 
 util_temp_program_object:
 	db	ti.TempProgObj, $5F,$5F,'tmp', 0, 0, 0, 0
-
-util_packet_file:
-	db  ti.AppVarObj, $5F, $5F, 'b', 0, 0, 0, 0, 0, 0
 

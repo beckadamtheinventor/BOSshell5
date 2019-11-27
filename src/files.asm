@@ -4,27 +4,24 @@ right_click:
 
 left_click:
 	call getCursorSelection
-	cp a,$FF
-	jp z,main_loop
-	call opening_file_hl
-	jp c,main_loop
+	jp nz,main_draw
+	ld (currentOpeningFile),hl
 	call openfile
-	jp main_loop
+	jp c,main_draw
+	ld hl,0
+currentOpeningFile:=$-3
+	jp execute_item_hl
 
-clickWaitLoop:
-	call gfx_SwapDraw
-	call .loop
-	call .loop2
-	jp main_loop
-.loop:
+
+WaitKeyUnpress:
 	call kb_AnyKey
 	or a,a
-	jr nz,.loop
+	jr nz,WaitKeyUnpress
 	ret
-.loop2:
+WaitKeyPress:
 	call kb_AnyKey
 	or a,a
-	jr z,.loop2
+	jr z,WaitKeyPress
 	ret
 
 delete_file:

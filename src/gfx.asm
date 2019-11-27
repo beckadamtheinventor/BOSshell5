@@ -120,6 +120,7 @@ getCursorSelection:
 	or a,a
 	sbc a,c
 	jr nc,.loopy
+
 	ld hl,(cursor)
 	ld c,80
 .loopx:
@@ -127,11 +128,14 @@ getCursorSelection:
 	or a,a
 	sbc hl,bc
 	jr nc,.loopx
+
 	ld a,d
 	add a,a
 	add a,a
 	add a,e
 	ld e,a
+	add a,a
+	add a,a
 	add a,a
 	add a,e
 	or a,a
@@ -139,10 +143,10 @@ getCursorSelection:
 	ld l,a
 	ld de,homeNameTemp
 	add hl,de
-	ld hl,(hl)
+	xor a,a
 	ret
 .failed:
-	ld a,$FF
+	or a,a
 	ret
 
 
@@ -352,7 +356,7 @@ NextHomeSprite:=$-3
 	cp a,$01 ;has an icon
 	ret nz
 	inc de
-	ex hl,de ;probably an icon here
+	ex hl,de ;probably an icon in hl now
 	ret
 
 drawHomeScreen:
@@ -473,14 +477,12 @@ homeSkip:=$-3
 	pop bc
 	pop bc
 
-	ld hl,0
+	ld de,0
 .currentHomeNamePtr:=$-3
-	ld de,(.currentdataptr)
-	ld (hl),de
-	inc hl
-	inc hl
-	inc hl
-	ld (.currentHomeNamePtr),hl
+	ld hl,(.currentdataptr)
+	ld bc,9
+	ldir
+	ld (.currentHomeNamePtr),de
 
 	ld hl,(.xpos)
 	ld de,80

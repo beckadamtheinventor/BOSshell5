@@ -1,24 +1,3 @@
-execute_item_hl:
-	call ti.Mov9ToOP1
-execute_item_op1:
-	call	flash_code_copy
-	ld a,(ti.OP1)
-	cp a,21
-	jr z,.exec
-	cp a,6
-	jr z,.exec
-	cp a,6
-	jr z,.exec
-	xor a,a
-	dec a
-	ret
-.exec:
-	jr	execute_program.entry
-
-opening_file_hl:
-	ld (currentOpeningFile),hl
-	call ti.Mov9ToOP1
-	jp ti.ChkFindSym
 
 editfile:
 	ld a,1
@@ -26,26 +5,59 @@ editfile:
 openfile:
 	xor a,a
 .entry:
-	ld (openfile.openmode),a
-	call getFileAssociation
-	ret nz
-	ld a,(hl)
-	cp a,internal_editor
-	jr z,.internal
-	ld hl,0
-currentOpeningFile:=$-3
-	ld a,0
-.openmode:=$-1
-	call util_setup_packet
-	jr .execute
-.internal:
-	inc hl
-	ld a,(hl)
-	or a,a
-	ret nz
-.execute:
+	ld (.mode),a
+	ld iy,ti.flags
+	call ti.Mov9ToOP1
+	call ti.ChkFindSym
+	ret c
+	call	ti.ChkInRam
+	jr	z,.in_ram
+	ex	de,hl
+	ld	de,9
+	add	hl,de
+	ld	e,(hl)
+	add	hl,de
+	inc	hl
+	ex hl,de
+.in_ram:					; hl -> size bytes
+	inc de
+	inc de ;skip the size bytes
+	ld (prgm_data_ptr),de
+	ld a,(de)
+	inc de
+	cp a,$EF
+	jr nz,.useassoc
+	ld a,(de)
+	cp a,$7B
+	jr z,.exec
+.useassoc:
+	push de
 	ld hl,(currentOpeningFile)
-	jp execute_item_hl
+	ld a,0
+.mode:=$-1
+	pop de
+	dec de
+	ld a,(de)
+	or a,a
+	jr nz,.tryassoc
+	inc de
+.tryassoc:
+	call getFileAssociation
+	jr z,.success
+	scf
+	ret
+.success:
+	ld de,(currentOpeningFile)
+	ld (currentOpeningFile),hl
+	ex hl,de
+	ld a,(hl)
+	inc hl
+	call util_setup_packet
+.exec:
+	call config_save
+	xor a,a
+	ret
+
 
 ; input de = file extension
 ; return nz when no association found
@@ -53,39 +65,61 @@ currentOpeningFile:=$-3
 getFileAssociation:
 	ld hl,0
 fileAssociationTable:=$-3
-	jr .entry
 .loop:
-	ld bc,9
-	add hl,bc
-.entry:
 	ld a,(hl)
 	or a,a
 	jr z,.noassoc
 	push de
 	call strcompare
 	pop de
-	jr nz,.loop
-	ret
+	ret z
+	ld bc,9
+	add hl,bc
+	jr .loop
 .noassoc:
-	inc a
+	xor a,a
+	dec a
 	ret
 
+execute_item_hl:
+	call ti.Mov9ToOP1
+execute_item_op1:
+	call	flash_code_copy
+	ld a,(ti.OP1)
+	cp a,21
+	jr z,execute_program.entry
+	cp a,6
+	jr z,execute_program.entry
+	cp a,5
+	jr z,execute_program.entry
+	xor a,a
+	dec a
+	jp main_draw
+
 execute_program:
-	call	util_move_prgm_name_to_op1
 	call	util_backup_prgm_name
 .entry:							; entry point, OP1 = name
+	ld iy,ti.flags
 	call ti.ChkFindSym
+	jp c,main_draw
 	ld a,b
 	ld (prgm_ram_status),a
+	ld iy,ti.flags
+	call	ti_CloseAll
+	call	libload_unload
+	ld de,(prgm_data_ptr)
 	ld a,(de)
 	cp a,$EF
-	jr	nz,execute_ti.basic_program		; execute basic program	
+	jr	nz,execute_ti.basic_program		; execute basic program
+	inc de
 	ld a,(de)
 	cp a,$7B
 	jr	nz,execute_ti.basic_program		; execute basic program
+	ld hl,(currentOpeningFile)
+	call ti.Mov9ToOP1
 	call	util_move_prgm_to_usermem		; execute assembly program
-	jp	nz,main_loop				; return on error
-	call	gfx_End
+	jp nz,main_draw		; return on error
+	call lcd_normal
 	ld	hl,return_asm_error
 	ld	(persistent_sp_error),sp
 	call	ti.PushErrorHandler
@@ -98,7 +132,10 @@ execute_assembly_program:
 	jp	ti.userMem
 
 execute_ti.basic_program:
-	call	gfx_End
+	call	ti_CloseAll
+	call	libload_unload
+	call lcd_normal
+	ld iy,ti.flags
 	ld	hl,(prgm_data_ptr)
 	ld	a,(hl)
 	cp	a,ti.tExtTok
@@ -165,4 +202,6 @@ prgm_ram_status:=$+1
 	ld	hl,hook_parser
 	call	ti.SetParserHook
 	ei
-	jp	ti.ParseInp				; run program
+	call	ti.ParseInp				; run program
+	xor a,a
+	ret

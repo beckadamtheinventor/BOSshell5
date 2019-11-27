@@ -36,15 +36,12 @@ relocate bos_code, bos_execution_base
 	include 'config.asm'
 	include 'ui.asm'
 	include 'editors/all_editors.asm'
-bos_exe_size:=$-bos_execution_base
 end relocate
 
 ; we want to keep these things in flash
-bos_flash_data:
 include 'flash.asm'
 include 'return.asm'
 include 'hooks.asm'
-bos_flash_size:=$-bos_flash_data
 
 include 'data.asm'
 
