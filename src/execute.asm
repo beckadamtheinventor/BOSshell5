@@ -120,10 +120,18 @@ execute_program:
 	call	util_move_prgm_to_usermem		; execute assembly program
 	jp nz,main_loop.redraw		; return on error
 	call lcd_normal
+	or a,a
+	sbc hl,hl
+	add hl,sp
+	push hl
 	ld	hl,return_asm_error
-	ld	(persistent_sp_error),sp
+;	ld	(persistent_sp_error),sp
 	call	ti.PushErrorHandler
-	ld	(persistent_sp),sp
+	or a,a
+	sbc hl,hl
+	add hl,sp
+	push hl
+;	ld	(persistent_sp),sp
 execute_assembly_program:
 	ld	hl,return_asm
 	push	hl

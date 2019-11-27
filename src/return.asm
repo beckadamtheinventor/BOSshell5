@@ -108,10 +108,14 @@ return_asm_error:
 return_basic:
 return_asm:						; handler for assembly / basic return
 return:
-	ld	sp,(persistent_sp)
+	pop hl
+	ld sp,hl
+;	ld	sp,(persistent_sp)
 	call	ti.PopErrorHandler
 .user_exit:
-	ld	sp,(persistent_sp_error)
+;	ld	sp,(persistent_sp_error)
+	pop hl
+	ld sp,hl
 	ld	a,(return_info)
 	cp	a,return_edit
 	jr	z,.skip					; return properly from external editors
@@ -120,6 +124,7 @@ return:
 	ld	a,return_prgm				; error handler for returning programs
 .skip:
 	ld	(return_info),a
+	ld iy,ti.flags
 	call	ti.RunIndicOff				; in case the launched program re-enabled it
 	di						; in case the launched program enabled interrupts...
 	call	ti.ClrAppChangeHook			; clear me!
