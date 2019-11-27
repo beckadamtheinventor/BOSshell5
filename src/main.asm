@@ -102,7 +102,7 @@ main_loop:
 	bit 2,a
 	jp nz,prevpage ;- key
 	bit 6,a
-	ret nz ; Is the clear key pressed?
+	jr nz,.exit ; Is the clear key pressed?
 ; Group 7
 	ld a,(hl)
 	and a,$f
@@ -116,7 +116,7 @@ main_loop:
 	bit 3,a
 	call nz,cursorUp   ;up arrow
 	jp main_loop
-exit:
+.exit:
 	call config_save
 	call ti_CloseAll
 	jp exit_full

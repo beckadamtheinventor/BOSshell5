@@ -19,6 +19,14 @@ gfx_BlitBuffer:
 	pop hl
 	ret
 
+home_item_width:=70
+home_item_height:=50
+home_item_top:=20
+home_item_bottom:=220
+home_item_left:=20
+home_item_right:=300
+home_item_text_offset_y:=home_item_height-9
+
 drawCursor:
 	ld hl,(cursor+3)
 	push hl
@@ -35,18 +43,18 @@ drawCursor:
 	pop hl
 
 drawCursorSelectionBox:
-	ld bc,52
+	ld bc,home_item_height+2
 	push bc
-	ld c,82
+	ld c,home_item_width+2
 	push bc
-	ld c,50
+	ld c,home_item_height
 	or a,a
 	sbc hl,hl
 	ld a,(cursor+3)
 	or a,a
-	sbc a,20
+	sbc a,home_item_top
 	jr c,.exity
-	cp a,200
+	cp a,home_item_bottom - home_item_top
 	jr nc,.exity
 .loopy:
 	add hl,bc
@@ -55,12 +63,13 @@ drawCursorSelectionBox:
 	jr nc,.loopy
 	or a,a
 	sbc hl,bc
-	ld c,19
+	ld c,home_item_top
 	add hl,bc
 	push hl
-	ld de,0
 	ld hl,(cursor)
-	ld c,80
+	ld de,home_item_left
+	ld e,0
+	ld c,home_item_width
 .loopx:
 	ex hl,de
 	add hl,bc
@@ -71,7 +80,8 @@ drawCursorSelectionBox:
 	ex hl,de
 	or a,a
 	sbc hl,bc
-	dec hl
+	ld bc,home_item_left
+	add hl,bc
 	push hl
 	call gfx_Rectangle
 	pop bc
@@ -109,11 +119,11 @@ eraseCursor:
 getCursorSelection:
 	ld a,(cursor+3)
 	or a,a
-	sbc a,20
+	sbc a,home_item_top
 	jr c,.failed
-	cp a,200
+	cp a,home_item_bottom - home_item_top
 	jr nc,.failed
-	ld bc,50
+	ld bc,home_item_height
 	ld de,$FFFF
 .loopy:
 	inc d
@@ -122,7 +132,7 @@ getCursorSelection:
 	jr nc,.loopy
 
 	ld hl,(cursor)
-	ld c,80
+	ld c,home_item_width
 .loopx:
 	inc e
 	or a,a
@@ -365,12 +375,19 @@ drawHomeScreen:
 	ld hl,0
 homeSkip:=$-3
 	ld (.skip),hl
-	xor a,a
-	sbc hl,hl
+	ld hl,home_item_left
 	ld (.xpos),hl
-	ld l,20
+	ld l,home_item_top
 	ld (.ypos),hl
+	xor a,a
 	ld (string_temp+8),a
+	ld hl,homeNameTemp
+	ld (hl),a
+	push hl
+	pop de
+	inc de
+	ld bc,143
+	ldir
 	ld hl,data_open_r
 	push hl
 	ld hl,data_folds_appvar
@@ -464,7 +481,7 @@ homeSkip:=$-3
 	pop bc
 .drawtitle:
 	ld hl,(.ypos)
-	ld de,41
+	ld de,home_item_text_offset_y
 	add hl,de
 	push hl
 	ld hl,(.xpos)
@@ -485,22 +502,21 @@ homeSkip:=$-3
 	ld (.currentHomeNamePtr),de
 
 	ld hl,(.xpos)
-	ld de,80
+	ld de,home_item_width
 	add hl,de
 	ld (.xpos),hl
-	ld de,320
+	ld de,home_item_right
 	or a,a
 	sbc hl,de
 	jr c,.next
 
-	or a,a
-	sbc hl,hl
+	ld hl,home_item_left
 	ld (.xpos),hl
 	ld hl,(.ypos)
-	ld de,50
+	ld de,home_item_height
 	add hl,de
 	ld (.ypos),hl
-	ld de,220
+	ld de,home_item_bottom
 	or a,a
 	sbc hl,de
 	ret nc

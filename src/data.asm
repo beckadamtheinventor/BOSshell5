@@ -109,6 +109,9 @@ data_string_quit1:
 data_string_quit2:
 	db	'2:',0,'Goto',0
 
+data_string_right_click:
+	db 'Hello World!',0
+
 data_string_bos_name:
 	db 'BOSshell'
 	db ti.AppVarObj
