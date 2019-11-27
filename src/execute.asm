@@ -94,7 +94,7 @@ execute_item_op1:
 	jr z,execute_program.entry
 	xor a,a
 	dec a
-	jp main_draw
+	jp main_loop.redraw
 
 execute_program:
 	call	util_backup_prgm_name
@@ -118,7 +118,7 @@ execute_program:
 	ld hl,(currentOpeningFile)
 	call ti.Mov9ToOP1
 	call	util_move_prgm_to_usermem		; execute assembly program
-	jp nz,main_draw		; return on error
+	jp nz,main_loop.redraw		; return on error
 	call lcd_normal
 	ld	hl,return_asm_error
 	ld	(persistent_sp_error),sp

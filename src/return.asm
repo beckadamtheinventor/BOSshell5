@@ -108,8 +108,6 @@ return_asm_error:
 return_basic:
 return_asm:						; handler for assembly / basic return
 return:
-	ld iy,ti.flags
-	call ti.HomeUp
 	ld	sp,(persistent_sp)
 	call	ti.PopErrorHandler
 .user_exit:
