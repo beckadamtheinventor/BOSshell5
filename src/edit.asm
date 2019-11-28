@@ -94,11 +94,11 @@ edit_basic_program:
 .not_archived:
 	ld	hl,hook_app_change
 	call	ti.SetAppChangeHook
+	call	lcd_normal
 	xor	a,a
 	ld	(ti.menuCurrent),a
 	call	ti.CursorOff
 	call	ti.RunIndicOff
-	call	gfx_End
 	ld	hl,string_temp			; contains OP1
 	push	hl
 	ld	de,ti.progToEdit

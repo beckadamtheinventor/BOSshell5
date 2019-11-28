@@ -43,9 +43,10 @@ hook_app_change:
 	call	ti.PopOP1
 	call	ti.ChkFindSym
 	jr	c,.dont_archive
-	ld	a,(edit_status)
-	or	a,a
-	call	nz,cesium.Arc_Unarc
+	;ld	a,(edit_status)
+	;or	a,a
+	;call	nz,cesium.Arc_Unarc
+	call cesium.Arc_Unarc
 .dont_archive:
 	ld	a,return_prgm
 	ld	(return_info),a

@@ -43,6 +43,44 @@ main_init:
 	ex (sp),hl
 	call gfx_SetTextFGColor
 	pop hl
+	ld hl,data_temp_prgm
+	call util_openVarHL
+	jq nz,main_draw
+	call gfx_SetDrawBuffer
+	ld hl,(config_colors)
+	push hl
+	call gfx_FillScreen
+	pop hl
+	or a,a
+	sbc hl,hl
+	push hl
+	push hl
+	call gfx_SetTextXY
+	pop hl
+	ld hl,data_save_temp_prgm
+	ex (sp),hl
+	call gfx_PrintStringLines
+	pop hl
+.saveloop:
+	ld iy,ti.flags
+	call util_get_csc
+	cp a,26
+	jp z,edit_temp_prgm
+	cp a,34
+	jr z,main_draw
+	cp a,18
+	jr nz,.saveloop
+.savetempprgm:
+	ld l,5
+	push hl
+	ld hl,backup_prgm_name
+	push hl
+	ld hl,data_temp_prgm
+	push hl
+	call ti_RenameVar
+	pop hl
+	pop hl
+	pop hl
 main_draw:
 	call countHomeItems
 	call gfx_SetDrawBuffer
@@ -54,10 +92,6 @@ main_draw:
 	call gfx_SetDrawScreen
 	call gfx_BlitBuffer
 main_loop:
-	jr .main
-.redraw:
-	jp main_draw
-.main:
 	call drawCursor
 	call kb_Scan
 	ld hl,kb_Data+2
@@ -133,7 +167,7 @@ maxHomeSkip:=$-3
 	add hl,de
 	ld (homeSkip),hl
 .done:
-	jp main_loop.redraw
+	jp main_draw
 
 prevpage:
 	ld hl,(homeSkip)
@@ -150,6 +184,6 @@ prevpage:
 	ld l,a
 .set:
 	ld (homeSkip),hl
-	jp main_loop.redraw
+	jp main_draw
 
 

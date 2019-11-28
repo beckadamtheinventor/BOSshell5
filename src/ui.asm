@@ -49,5 +49,14 @@ input_number_routine:
 	pop hl
 	ret
 
+ui_credits_area_x:=0
+ui_credits_area_y:=221
+ui_credits_area_w:=20
+ui_credits_area_h:=19
+
+ui_folder_area_x:=0
+ui_folder_area_y:=10
+ui_folder_area_w:=80
+ui_folder_area_h:=9
 
 

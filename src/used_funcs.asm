@@ -18,6 +18,8 @@ gfx_Blit:
 	jp 33
 gfx_BlitArea:
 	jp 39
+gfx_PrintChar:
+	jp 42
 gfx_PrintInt:
 	jp 45
 gfx_PrintUInt:
@@ -42,6 +44,8 @@ gfx_GetTextX:
 	jp 84
 gfx_GetTextY:
 	jp 87
+gfx_HorizonLine:
+	jp 93
 gfx_Rectangle:
 	jp 105
 gfx_FillRectangle:

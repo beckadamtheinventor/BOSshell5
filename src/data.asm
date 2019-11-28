@@ -109,8 +109,88 @@ data_string_quit1:
 data_string_quit2:
 	db	'2:',0,'Goto',0
 
-data_string_right_click:
-	db 'Hello World!',0
+
+text_right_click_menu_21:=$+1
+	db 15
+	dl data_open_string
+	dl data_edit_string
+	dl data_copy_string
+	dl data_cut_string
+	dl data_paste_string
+	dl data_delete_string
+
+action_right_click_menu_21:
+	dl left_click.open
+	dl left_click.edit
+	dl main_draw
+	dl main_draw
+	dl main_draw
+	dl delete_file
+
+text_right_click_menu_6:=$+1
+	db 12
+	dl data_open_string
+	dl data_copy_string
+	dl data_cut_string
+	dl data_paste_string
+	dl data_delete_string
+
+action_right_click_menu_6:
+	dl left_click.open
+	dl main_draw
+	dl main_draw
+	dl main_draw
+	dl delete_file
+
+text_right_click_menu_5:=$+1
+	db 15
+	dl data_open_string
+	dl data_edit_string
+	dl data_copy_string
+	dl data_cut_string
+	dl data_paste_string
+	dl data_delete_string
+
+action_right_click_menu_5:
+	dl openprgm
+	dl editprgm
+	dl main_draw
+	dl main_draw
+	dl main_draw
+	dl	delete_file
+
+data_save_temp_prgm:
+	dl .save_temp_prgm
+	dl .discard
+	dl .save
+	dl .return_to_editing
+	dl 0
+.save_temp_prgm:
+	db "Save program before exiting?",0
+.discard:
+	db "[1]: discard",0
+.save:
+	db "[2]: save",0
+.return_to_editing:
+	db "[3]: return to editing",0
+
+data_open_string:
+	db "open",0
+data_edit_string:
+	db "edit",0
+data_copy_string:
+	db "copy",0
+data_cut_string:
+	db "cut",0
+data_paste_string:
+	db "paste",0
+data_delete_string:
+	db "delete",0
+data_string_enter_delete:
+	db "Press enter to delete",0
+
+data_temp_prgm:
+	db 5,"tempprgm",0
 
 data_string_bos_name:
 	db 'BOSshell'

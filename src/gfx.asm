@@ -43,11 +43,15 @@ drawCursor:
 	pop hl
 
 drawCursorSelectionBox:
+	ld hl,(cursor)
+	ld de,home_item_right
+	or a,a
+	sbc hl,de
+	ret nc
 	ld bc,home_item_height+2
 	push bc
 	ld c,home_item_width+2
 	push bc
-	ld c,home_item_height
 	or a,a
 	sbc hl,hl
 	ld a,(cursor+3)
@@ -56,6 +60,7 @@ drawCursorSelectionBox:
 	jr c,.exity
 	cp a,home_item_bottom - home_item_top
 	jr nc,.exity
+	ld c,home_item_height
 .loopy:
 	add hl,bc
 	or a,a
@@ -68,6 +73,9 @@ drawCursorSelectionBox:
 	push hl
 	ld hl,(cursor)
 	ld de,home_item_left
+	or a,a
+	sbc hl,de
+	jr c,.exitx
 	ld e,0
 	ld c,home_item_width
 .loopx:
@@ -85,6 +93,7 @@ drawCursorSelectionBox:
 	push hl
 	call gfx_Rectangle
 	pop bc
+.exitx:
 	pop bc
 .exity:
 	pop bc
@@ -93,7 +102,7 @@ drawCursorSelectionBox:
 
 eraseCursor:
 	push af
-	ld hl,16 ;cursor width/height
+	ld hl,cursor_width ;cursor width/height
 	push hl
 	push hl
 	ld hl,(cursor+3)
@@ -117,6 +126,11 @@ eraseCursor:
 	ret
 
 getCursorSelection:
+	ld hl,(cursor)
+	ld de,home_item_right
+	or a,a
+	sbc hl,de
+	jr nc,.failed
 	ld a,(cursor+3)
 	or a,a
 	sbc a,home_item_top
@@ -132,6 +146,10 @@ getCursorSelection:
 	jr nc,.loopy
 
 	ld hl,(cursor)
+	ld c,home_item_left
+	or a,a
+	sbc hl,bc
+	jr c,.failed
 	ld c,home_item_width
 .loopx:
 	inc e
@@ -153,12 +171,42 @@ getCursorSelection:
 	ld l,a
 	ld de,homeNameTemp
 	add hl,de
+	ld de,openingVarName
+	push de
+	ld bc,9
+	ldir
+	pop hl
+	ld (currentOpeningFile),hl
 	xor a,a
 	ret
 .failed:
-	or a,a
+	xor a,a
+	inc a
 	ret
 
+gfx_PrintStringLines:
+	pop de
+	pop hl
+	push hl
+	push de
+.loop:
+	push hl
+	ld hl,(hl)
+	or a,a
+	sbc hl,de
+	add hl,de
+	jr z,.exit
+	push hl
+	call gfx_PrintStringLine
+	pop hl
+	pop hl
+	inc hl
+	inc hl
+	inc hl
+	jr .loop
+.exit:
+	pop hl
+	ret
 
 gfx_PrintStringLine:
 	pop de
@@ -369,7 +417,62 @@ NextHomeSprite:=$-3
 	ex hl,de ;probably an icon in hl now
 	ret
 
+drawHomeScreenLines:
+	ld hl,(config_colors+1)
+	push hl
+	call gfx_SetColor
+	pop hl
+	ld hl,9
+	push hl
+	ld l,0
+	push hl
+	ld hl,320
+	push hl
+	call gfx_HorizonLine
+	pop bc
+	pop de
+	pop hl
+	ld hl,19
+	push hl
+	push de
+	push bc
+	call gfx_HorizonLine
+	pop bc
+	pop de
+	pop hl
+	ld hl,221
+	push hl
+	push de
+	push bc
+	call gfx_HorizonLine
+	pop hl
+	pop hl
+	pop hl
+	ret
+
 drawHomeScreen:
+	call drawHomeScreenLines
+	or a,a
+	sbc hl,hl
+	push hl
+	push hl
+	ld hl,_ico_folder
+	push hl
+	call gfx_TransparentSprite
+	pop hl
+	pop hl
+	pop hl
+	ld hl,221
+	push hl
+	or a,a
+	sbc hl,hl
+	push hl
+	ld hl,_ico_shell
+	push hl
+	call gfx_TransparentSprite
+	pop hl
+	pop hl
+	pop hl
 	ld hl,homeNameTemp
 	ld (.currentHomeNamePtr),hl
 	ld hl,0

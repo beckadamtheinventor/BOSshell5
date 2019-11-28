@@ -77,22 +77,8 @@ util_delete_prgm_from_usermem:
 	jp	ti.DelMem
 
 util_move_prgm_to_usermem:
-	ld	a,$9				; 'add hl,bc'
-	ld	(.smc),a
-	call	ti.ChkFindSym
-	jr	c,.error_not_found			; hope this doesn't happen
-	call	ti.ChkInRam
-	ex	de,hl
-	jr	z,.in_ram
-	xor	a,a
-	ld	(.smc),a
-	ld	de,9
-	add	hl,de
-	ld	e,(hl)
-	add	hl,de
-	inc	hl
-.in_ram:					; hl -> size bytes
-	call	ti.LoadDEInd_s
+	call util_openVarHL
+	jr c,.error_not_found
 	inc	hl
 	inc	hl				; bypass tExtTok, tAsm84CECmp
 	push	hl
@@ -106,8 +92,6 @@ util_move_prgm_to_usermem:
 	call	ti.InsertMem			; insert memory into usermem
 	pop	hl				; hl -> start of program
 	ld	bc,(ti.asm_prgm_size)		; load size of current program
-.smc := $
-	add	hl,bc				; if not in ram smc it so it doesn't execute
 	ldir					; copy the program to userMem
 	xor	a,a
 	ret					; return
@@ -116,6 +100,26 @@ util_move_prgm_to_usermem:
 .error_not_found:
 	xor	a,a
 	inc	a
+	ret
+
+
+; HL->OP1, returns HL pointer to file, DE length of file.
+util_openVarHL:
+	ld iy,ti.flags
+	call ti.Mov9ToOP1
+	call	ti.ChkFindSym
+	ret c
+	call	ti.ChkInRam
+	ex	de,hl
+	jr	z,.in_ram
+	ld	de,9
+	add	hl,de
+	ld	e,(hl)
+	add	hl,de
+	inc	hl
+.in_ram:					; hl -> size bytes
+	call	ti.LoadDEInd_s
+	xor a,a
 	ret
 
 
@@ -139,6 +143,12 @@ util_delay_one_second:
 	ld	a,c
 	or	a,b
 	jr	nz,.delay
+	ret
+
+util_get_csc:
+	call ti.GetCSC
+	or a,a
+	jr z,util_get_csc
 	ret
 
 util_get_key:

@@ -6,32 +6,19 @@ openfile:
 	xor a,a
 .entry:
 	ld (.mode),a
-	ld iy,ti.flags
-	call ti.Mov9ToOP1
-	call ti.ChkFindSym
+	ld hl,openingVarName
+	call util_openVarHL
 	ret c
-	call	ti.ChkInRam
-	jr	z,.in_ram
-	ex	de,hl
-	ld	de,9
-	add	hl,de
-	ld	e,(hl)
-	add	hl,de
-	inc	hl
-	ex hl,de
-.in_ram:					; hl -> size bytes
-	inc de
-	inc de ;skip the size bytes
-	ld (prgm_data_ptr),de
-	ld a,(de)
-	inc de
+	ld (prgm_data_ptr),hl
+	ld a,(hl)
+	inc hl
 	cp a,$EF
 	jr nz,.useassoc
-	ld a,(de)
+	ld a,(hl)
 	cp a,$7B
 	jr z,.exec
 .useassoc:
-	push de
+	push hl
 	ld hl,(currentOpeningFile)
 	ld a,0
 .mode:=$-1
@@ -57,6 +44,51 @@ openfile:
 	call config_save
 	xor a,a
 	ret
+
+openingVarName:
+	db 10 dup 0
+
+openprgm:
+	ld hl,(currentOpeningFile)
+	call util_openVarHL
+	jp c,main_draw
+	jp execute_program.entry
+
+editprgm:
+	ld hl,(currentOpeningFile)
+	call util_openVarHL
+	jp c,main_draw
+	jp edit_basic_program
+	push de
+	push hl
+	ld l,5
+	push hl
+	ld hl,data_open_w
+	push hl
+	ld hl,data_temp_prgm+1
+	push hl
+	call ti_OpenVar
+	pop bc
+	pop bc
+	pop bc
+	pop de
+	pop bc
+	ld l,a
+	push hl
+	ld hl,1
+	push hl
+	push bc
+	push de
+	call ti_Write
+	pop hl
+	pop hl
+	pop hl
+	call ti_Close
+	pop hl
+edit_temp_prgm:
+	ld hl,data_temp_prgm
+	call ti.Mov9ToOP1
+	jp edit_basic_program
 
 
 ; input de = file extension
@@ -94,7 +126,7 @@ execute_item_op1:
 	jr z,execute_program.entry
 	xor a,a
 	dec a
-	jp main_loop.redraw
+	jp main_draw
 
 execute_program:
 	call	util_backup_prgm_name
@@ -115,23 +147,20 @@ execute_program:
 	ld a,(de)
 	cp a,$7B
 	jr	nz,execute_ti.basic_program		; execute basic program
-	ld hl,(currentOpeningFile)
-	call ti.Mov9ToOP1
+	ld hl,openingVarName
 	call	util_move_prgm_to_usermem		; execute assembly program
-	jp nz,main_loop.redraw		; return on error
+	jp nz,main_init		; return on error
 	call lcd_normal
 	or a,a
 	sbc hl,hl
 	add hl,sp
 	push hl
 	ld	hl,return_asm_error
-;	ld	(persistent_sp_error),sp
 	call	ti.PushErrorHandler
 	or a,a
 	sbc hl,hl
 	add hl,sp
 	push hl
-;	ld	(persistent_sp),sp
 execute_assembly_program:
 	ld	hl,return_asm
 	push	hl

@@ -35,7 +35,6 @@ relocate bos_code, bos_execution_base
 	include 'gfx.asm'
 	include 'config.asm'
 	include 'ui.asm'
-	include 'editors/all_editors.asm'
 end relocate
 
 ; we want to keep these things in flash
