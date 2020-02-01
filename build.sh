@@ -15,4 +15,4 @@ echo "compiling to $name"
 echo $name
 echo "Wrote binary to $name."
 
-read -p "Finished. Press any key to exit" -t 3
+read -p "Finished. Press any key to exit"

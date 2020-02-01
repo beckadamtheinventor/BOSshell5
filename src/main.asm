@@ -8,6 +8,9 @@ init:
 	call libload_load
 	jr z,main_init
 	ld iy,ti.flags
+	call ti.ClrLCDFull
+	call ti.HomeUp
+	call ti.DrawStatusBar
 	ld hl,.needlibload
 	call ti.PutS
 	xor a,a
@@ -19,7 +22,7 @@ init:
 	call ti.GetCSC
 	or a,a
 	jr z,.GetCSC
-	jp exit_full
+	jp ti.JForceCmdNoChar
 .needlibload:
 	db "Need libLoad",0
 	db "tiny.cc/clibs",0

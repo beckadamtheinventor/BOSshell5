@@ -82,6 +82,7 @@ right_click_menu_loop:
 	ret
 .return:
 	ld hl,(.offset)
+	call util_WhileKeyPressed
 	xor a,a
 	ret
 .back:

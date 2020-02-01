@@ -11,10 +11,11 @@ openfile:
 	ret c
 	ld (prgm_data_ptr),hl
 	ld a,(hl)
-	inc hl
 	cp a,$EF
 	jr nz,.useassoc
+	inc hl
 	ld a,(hl)
+	dec hl
 	cp a,$7B
 	jr z,.exec
 .useassoc:
@@ -145,6 +146,7 @@ execute_program:
 	jr	nz,execute_ti.basic_program		; execute basic program
 	inc de
 	ld a,(de)
+	dec de
 	cp a,$7B
 	jr	nz,execute_ti.basic_program		; execute basic program
 	ld hl,openingVarName
@@ -172,6 +174,16 @@ execute_ti.basic_program:
 	call	ti_CloseAll
 	call	libload_unload
 	call lcd_normal
+	or a,a
+	sbc hl,hl
+	add hl,sp
+	push hl
+	ld	hl,return_basic_error
+	call	ti.PushErrorHandler
+	or a,a
+	sbc hl,hl
+	add hl,sp
+	push hl
 	ld iy,ti.flags
 	ld	hl,(prgm_data_ptr)
 	ld	a,(hl)
@@ -216,10 +228,6 @@ prgm_ram_status:=$+1
 	ld	(ti.curCol),a
 	ld	(ti.appErr1),a
 	set	ti.graphDraw,(iy + ti.graphFlags)
-	ld	hl,return_basic_error
-	ld	(persistent_sp_error),sp
-	call	ti.PushErrorHandler
-	ld	(persistent_sp),sp
 	set	ti.appTextSave,(iy + ti.appFlags)	; text goes to textshadow
 	set	ti.progExecuting,(iy + ti.newDispF)
 	res	7,(iy + $45)

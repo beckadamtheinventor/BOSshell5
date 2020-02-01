@@ -122,6 +122,10 @@ util_openVarHL:
 	xor a,a
 	ret
 
+util_WhileKeyPressed:
+	call kb_AnyKey
+	jr nz,util_WhileKeyPressed
+	ret
 
 util_check_free_ram:
 	push	hl
